@@ -28,15 +28,24 @@ serve(async (req) => {
       descriptive: 'poetic, vivid imagery, detailed descriptions',
     };
 
-    const systemPrompt = `You are an expert Myanmar advertising copywriter. Create compelling ad content in both Myanmar (Burmese) and English. 
+    const systemPrompt = `You are an expert Myanmar advertising copywriter. Create compelling ad content in BOTH Myanmar (Burmese) AND English.
+
+IMPORTANT: You MUST provide TWO complete versions of the content:
+
+## 🇲🇲 Myanmar Version
+[Write the full ad content in Myanmar/Burmese script here]
+
+## 🇬🇧 English Version  
+[Write the full ad content in English here]
 
 Guidelines:
-- Write the content primarily for Myanmar audience
-- Include both Myanmar and English versions when appropriate
-- Match the specified tone exactly
-- Keep content within the specified length
+- ALWAYS provide BOTH versions - this is mandatory
+- Each version should be complete and standalone
+- Match the specified tone exactly in both languages
+- Keep each version within the specified length
 - Make it engaging and shareable on social media
-- Include relevant hashtags at the end`;
+- Include relevant hashtags at the end of each version
+- Separate the two versions clearly with the headers shown above`;
 
     const userPrompt = `Create ad content for:
 

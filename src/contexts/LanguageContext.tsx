@@ -51,6 +51,7 @@ const translations: Translations = {
   'generator.copied': { en: 'Copied!', my: 'ကူးယူပြီး!' },
   'generator.save': { en: 'Save to Archives', my: 'မှတ်တမ်းတွင် သိမ်းရန်' },
   'generator.saved': { en: 'Saved!', my: 'သိမ်းပြီး!' },
+  'generator.generateNew': { en: 'Generate New', my: 'အသစ်ဖန်တီးရန်' },
   
   // Tones
   'tone.friendly': { en: 'Friendly', my: 'ဖော်ရွေ' },
