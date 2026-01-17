@@ -69,29 +69,31 @@ export function GeneratedContent({
   };
 
   return (
-    <div className="mt-6 p-6 rounded-xl bg-card border border-border">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg">{t('generator.result')}</h3>
+    <div className="mt-4 sm:mt-6 p-4 sm:p-6 rounded-xl bg-card border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <h3 className="font-semibold text-base sm:text-lg">{t('generator.result')}</h3>
         <div className="flex gap-2 flex-wrap">
           {onReset && (
             <Button
               variant="outline"
               size="sm"
               onClick={onReset}
-              className="gap-2"
+              className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
             >
-              <RefreshCw className="h-4 w-4" />
-              {t('generator.generateNew')}
+              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">{t('generator.generateNew')}</span>
+              <span className="xs:hidden">New</span>
             </Button>
           )}
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopy}
-            className="gap-2"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
           >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? t('generator.copied') : t('generator.copy')}
+            {copied ? <Check className="h-3 w-3 sm:h-4 sm:w-4" /> : <Copy className="h-3 w-3 sm:h-4 sm:w-4" />}
+            <span className="hidden xs:inline">{copied ? t('generator.copied') : t('generator.copy')}</span>
+            <span className="xs:hidden">{copied ? '✓' : 'Copy'}</span>
           </Button>
           {user && (
             <Button
@@ -99,16 +101,17 @@ export function GeneratedContent({
               size="sm"
               onClick={handleSave}
               disabled={saving || saved}
-              className="gap-2"
+              className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
             >
               {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
               ) : saved ? (
-                <Check className="h-4 w-4" />
+                <Check className="h-3 w-3 sm:h-4 sm:w-4" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className="h-3 w-3 sm:h-4 sm:w-4" />
               )}
-              {saved ? t('generator.saved') : t('generator.save')}
+              <span className="hidden xs:inline">{saved ? t('generator.saved') : t('generator.save')}</span>
+              <span className="xs:hidden">{saved ? '✓' : 'Save'}</span>
             </Button>
           )}
         </div>

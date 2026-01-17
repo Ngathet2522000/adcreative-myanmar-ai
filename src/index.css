@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom breakpoint for extra small screens */
+@media (min-width: 400px) {
+  .xs\:inline {
+    display: inline;
+  }
+  .xs\:hidden {
+    display: none;
+  }
+  .xs\:block {
+    display: block;
+  }
+}
+
 /* Adcreative Myanmar AI - Dark Theme with Blue/Purple Accents */
 
 @layer base {

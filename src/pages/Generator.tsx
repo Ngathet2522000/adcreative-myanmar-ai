@@ -108,9 +108,9 @@ export default function Generator() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container py-8 max-w-4xl">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gradient">{t('generator.title')}</h2>
+      <main className="container py-4 sm:py-8 px-3 sm:px-4 max-w-4xl">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gradient">{t('generator.title')}</h2>
           {user && (
             <p className="text-sm text-muted-foreground mt-1">
               Welcome, {user.label}
@@ -123,9 +123,9 @@ export default function Generator() {
           )}
         </div>
 
-        <form onSubmit={handleGenerate} className="space-y-6">
+        <form onSubmit={handleGenerate} className="space-y-4 sm:space-y-6">
           {/* Topic */}
-          <div className="glass-card rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-4 sm:p-6">
             <Label htmlFor="topic" className="text-sm font-medium">
               {t('generator.topic')} *
             </Label>
@@ -140,7 +140,7 @@ export default function Generator() {
           </div>
 
           {/* Keywords */}
-          <div className="glass-card rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-4 sm:p-6">
             <Label htmlFor="keywords" className="text-sm font-medium">
               {t('generator.keywords')}
             </Label>
@@ -154,7 +154,7 @@ export default function Generator() {
           </div>
 
           {/* Additional Context */}
-          <div className="glass-card rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-4 sm:p-6">
             <Label htmlFor="context" className="text-sm font-medium">
               {t('generator.context')}
             </Label>
@@ -163,12 +163,12 @@ export default function Generator() {
               value={additionalContext}
               onChange={(e) => setAdditionalContext(e.target.value)}
               placeholder={t('generator.contextPlaceholder')}
-              className="mt-2 min-h-[100px]"
+              className="mt-2 min-h-[80px] sm:min-h-[100px]"
             />
           </div>
 
           {/* Content Length */}
-          <div className="glass-card rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-4 sm:p-6">
             <Label className="text-sm font-medium mb-3 block">
               {t('generator.contentLength')}
             </Label>
@@ -176,7 +176,7 @@ export default function Generator() {
           </div>
 
           {/* Visual Reference */}
-          <div className="glass-card rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-4 sm:p-6">
             <Label className="text-sm font-medium mb-3 block">
               {t('generator.visualRef')}
             </Label>
@@ -184,11 +184,11 @@ export default function Generator() {
           </div>
 
           {/* Tone Selection */}
-          <div className="glass-card rounded-2xl p-6">
-            <Label className="text-sm font-medium mb-4 block">
+          <div className="glass-card rounded-2xl p-4 sm:p-6">
+            <Label className="text-sm font-medium mb-3 sm:mb-4 block">
               {t('generator.selectTone')}
             </Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
               {tones.map((tone) => (
                 <ToneCard
                   key={tone.key}
