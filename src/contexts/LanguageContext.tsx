@@ -52,6 +52,11 @@ const translations: Translations = {
   'generator.save': { en: 'Save to Archives', my: 'မှတ်တမ်းတွင် သိမ်းရန်' },
   'generator.saved': { en: 'Saved!', my: 'သိမ်းပြီး!' },
   'generator.generateNew': { en: 'Generate New', my: 'အသစ်ဖန်တီးရန်' },
+  'generator.quotaTitle': { en: 'Daily Quota', my: 'နေ့စဉ် ကန့်သတ်ချက်' },
+  'generator.quotaRemaining': { en: '{remaining} of {limit} generations remaining today', my: 'ယနေ့အတွက် {limit} ခုအနက် {remaining} ခု ကျန်ရှိနေသည်' },
+  'generator.quotaExhausted': { en: 'Daily limit reached. Try again tomorrow!', my: 'နေ့စဉ် ကန့်သတ်ချက် ပြည့်သွားပါပြီ။ မနက်ဖြန် ထပ်ကြိုးစားပါ!' },
+  'generator.tierFree': { en: 'Free', my: 'အခမဲ့' },
+  'generator.tierPremium': { en: 'Premium', my: 'ပရီမီယံ' },
   
   // Tones
   'tone.friendly': { en: 'Friendly', my: 'ဖော်ရွေ' },
