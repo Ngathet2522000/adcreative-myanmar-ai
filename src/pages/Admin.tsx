@@ -34,6 +34,7 @@ interface GeminiSession {
   is_converted_to_system_key: boolean;
   created_at: string;
   last_used_at: string;
+  usage_count: number;
 }
 
 export default function Admin() {
@@ -447,6 +448,9 @@ export default function Admin() {
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2 mt-1">
+                          <span className="text-[10px] sm:text-xs bg-secondary/50 px-1.5 py-0.5 rounded">
+                            {session.usage_count} uses
+                          </span>
                           <span className="text-[10px] sm:text-xs text-muted-foreground">
                             {t('admin.lastUsed')}: {format(new Date(session.last_used_at), 'MMM d, h:mm a')}
                           </span>
