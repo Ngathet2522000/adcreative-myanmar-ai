@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple hash function for API key identification
+function hashApiKey(apiKey: string): string {
+  let hash = 0;
+  for (let i = 0; i < apiKey.length; i++) {
+    const char = apiKey.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `key_${Math.abs(hash).toString(16)}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -16,10 +27,56 @@ serve(async (req) => {
 
     console.log('Generate content request:', { topic, tone, contentLength, useGemini, hasApiKey: !!geminiApiKey, userId });
 
-    // Initialize Supabase client for usage tracking
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get daily limit from settings
+    const { data: limitSetting } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'daily_generation_limit')
+      .maybeSingle();
+    
+    const dailyLimit = parseInt(limitSetting?.value || '50', 10);
+    console.log('Daily generation limit:', dailyLimit);
+
+    // Check rate limit
+    const today = new Date().toISOString().split('T')[0];
+    let rateLimitKey: { user_id?: string; api_key_hash?: string } = {};
+    
+    if (userId) {
+      rateLimitKey = { user_id: userId };
+    } else if (geminiApiKey) {
+      rateLimitKey = { api_key_hash: hashApiKey(geminiApiKey) };
+    }
+
+    if (Object.keys(rateLimitKey).length > 0) {
+      // Check current usage
+      const { data: usageData } = await supabase
+        .from('daily_usage')
+        .select('id, generation_count')
+        .eq('usage_date', today)
+        .match(rateLimitKey)
+        .maybeSingle();
+
+      const currentCount = usageData?.generation_count || 0;
+      console.log('Current daily usage:', currentCount, '/', dailyLimit);
+
+      if (currentCount >= dailyLimit) {
+        console.log('Rate limit exceeded');
+        return new Response(JSON.stringify({ 
+          error: `Daily limit of ${dailyLimit} generations reached. Please try again tomorrow.`,
+          rateLimited: true,
+          currentUsage: currentCount,
+          limit: dailyLimit
+        }), {
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     const lengthGuide = {
       short: '50-100 words',
@@ -69,52 +126,11 @@ ${imageBase64 ? 'Note: Visual reference image was provided. Consider visual elem
 Please provide the ad content now:`;
 
     let response;
-    let usageTrackingPromise: Promise<void> | null = null;
     
     // Use Gemini API if provided (user's own key or assigned key)
     if (useGemini && geminiApiKey) {
       console.log('Using Gemini API with provided key');
       
-      // Track usage for gemini_sessions (user-provided keys)
-      usageTrackingPromise = (async () => {
-        try {
-          // First try to update gemini_sessions
-          const { data: sessionData, error: sessionError } = await supabase
-            .from('gemini_sessions')
-            .select('id, usage_count')
-            .eq('gemini_api_key', geminiApiKey)
-            .maybeSingle();
-
-          if (sessionData) {
-            await supabase
-              .from('gemini_sessions')
-              .update({ 
-                usage_count: (sessionData.usage_count || 0) + 1,
-                last_used_at: new Date().toISOString()
-              })
-              .eq('id', sessionData.id);
-            console.log('Updated gemini_sessions usage count');
-          }
-
-          // Also check system_keys if this key is there
-          const { data: systemKeyData } = await supabase
-            .from('system_keys')
-            .select('id, usage_count')
-            .eq('api_key', geminiApiKey)
-            .maybeSingle();
-
-          if (systemKeyData) {
-            await supabase
-              .from('system_keys')
-              .update({ usage_count: (systemKeyData.usage_count || 0) + 1 })
-              .eq('id', systemKeyData.id);
-            console.log('Updated system_keys usage count');
-          }
-        } catch (err) {
-          console.error('Usage tracking error:', err);
-        }
-      })();
-
       // Use Google Gemini directly
       response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiApiKey, {
         method: 'POST',
@@ -134,15 +150,15 @@ Please provide the ad content now:`;
       const data = await response.json();
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      // Wait for usage tracking to complete
-      if (usageTrackingPromise) await usageTrackingPromise;
+      // Track usage after successful generation
+      await trackUsage(supabase, today, rateLimitKey, geminiApiKey);
 
       console.log('Content generated successfully with Gemini API');
       return new Response(JSON.stringify({ content }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {
-      // Use Lovable AI Gateway (no tracking needed as it's a system resource)
+      // Use Lovable AI Gateway
       console.log('Using Lovable AI Gateway');
       const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
       if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
@@ -179,6 +195,9 @@ Please provide the ad content now:`;
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content;
 
+      // Track usage after successful generation
+      await trackUsage(supabase, today, rateLimitKey, null);
+
       console.log('Content generated successfully with Lovable AI');
       return new Response(JSON.stringify({ content }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -192,3 +211,77 @@ Please provide the ad content now:`;
     });
   }
 });
+
+async function trackUsage(
+  supabase: any, 
+  today: string, 
+  rateLimitKey: { user_id?: string; api_key_hash?: string },
+  geminiApiKey: string | null
+) {
+  try {
+    // Update or insert daily usage
+    if (Object.keys(rateLimitKey).length > 0) {
+      const { data: existing } = await supabase
+        .from('daily_usage')
+        .select('id, generation_count')
+        .eq('usage_date', today)
+        .match(rateLimitKey)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('daily_usage')
+          .update({ 
+            generation_count: existing.generation_count + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('daily_usage')
+          .insert({
+            usage_date: today,
+            ...rateLimitKey,
+            generation_count: 1
+          });
+      }
+      console.log('Daily usage tracked');
+    }
+
+    // Update API key usage counts
+    if (geminiApiKey) {
+      // Update gemini_sessions
+      const { data: sessionData } = await supabase
+        .from('gemini_sessions')
+        .select('id, usage_count')
+        .eq('gemini_api_key', geminiApiKey)
+        .maybeSingle();
+
+      if (sessionData) {
+        await supabase
+          .from('gemini_sessions')
+          .update({ 
+            usage_count: (sessionData.usage_count || 0) + 1,
+            last_used_at: new Date().toISOString()
+          })
+          .eq('id', sessionData.id);
+      }
+
+      // Update system_keys if exists
+      const { data: systemKeyData } = await supabase
+        .from('system_keys')
+        .select('id, usage_count')
+        .eq('api_key', geminiApiKey)
+        .maybeSingle();
+
+      if (systemKeyData) {
+        await supabase
+          .from('system_keys')
+          .update({ usage_count: (systemKeyData.usage_count || 0) + 1 })
+          .eq('id', systemKeyData.id);
+      }
+    }
+  } catch (err) {
+    console.error('Usage tracking error:', err);
+  }
+}
