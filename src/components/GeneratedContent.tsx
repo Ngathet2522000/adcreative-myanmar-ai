@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, Save, Loader2 } from 'lucide-react';
+import { Copy, Check, Save, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,7 @@ interface GeneratedContentProps {
   additionalContext: string;
   contentLength: string;
   tone: string;
+  onReset?: () => void;
 }
 
 export function GeneratedContent({
@@ -22,6 +23,7 @@ export function GeneratedContent({
   additionalContext,
   contentLength,
   tone,
+  onReset,
 }: GeneratedContentProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -70,7 +72,18 @@ export function GeneratedContent({
     <div className="mt-6 p-6 rounded-xl bg-card border border-border">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-lg">{t('generator.result')}</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {onReset && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReset}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {t('generator.generateNew')}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

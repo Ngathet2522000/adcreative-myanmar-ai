@@ -44,6 +44,16 @@ export default function Generator() {
     }
   }, [user, isGeminiMode, navigate]);
 
+  const resetForm = () => {
+    setTopic('');
+    setKeywords('');
+    setAdditionalContext('');
+    setContentLength('medium');
+    setSelectedTone('friendly');
+    setImage(null);
+    setGeneratedContent('');
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic.trim()) return;
@@ -220,6 +230,7 @@ export default function Generator() {
             additionalContext={additionalContext}
             contentLength={contentLength}
             tone={selectedTone}
+            onReset={resetForm}
           />
         )}
       </main>
