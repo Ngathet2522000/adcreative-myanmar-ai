@@ -26,21 +26,21 @@ export function ToneCard({ tone, icon, selected, onClick }: ToneCardProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        'flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200',
+        'flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all duration-200',
         'hover:scale-105 hover:shadow-lg',
         selected
           ? 'border-primary bg-primary/10 glow-primary'
           : 'border-border bg-card hover:border-primary/50'
       )}
     >
-      <span className="text-3xl mb-2">{icon}</span>
+      <span className="text-2xl sm:text-3xl mb-1 sm:mb-2">{icon}</span>
       <span className={cn(
-        'font-semibold text-sm',
+        'font-semibold text-xs sm:text-sm',
         selected ? 'text-primary' : 'text-foreground'
       )}>
         {t(data.titleKey)}
       </span>
-      <span className="text-xs text-muted-foreground text-center mt-1">
+      <span className="text-[10px] sm:text-xs text-muted-foreground text-center mt-0.5 sm:mt-1 line-clamp-2">
         {t(data.descKey)}
       </span>
     </button>

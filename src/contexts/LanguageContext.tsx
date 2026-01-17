@@ -79,8 +79,9 @@ const translations: Translations = {
   'admin.password': { en: 'Admin Password', my: 'Admin စကားဝှက်' },
   'admin.passwordPlaceholder': { en: 'Enter admin password', my: 'Admin စကားဝှက် ထည့်ပါ' },
   'admin.enter': { en: 'Enter', my: 'ဝင်ရောက်ရန်' },
-  'admin.users': { en: 'User Management', my: 'အသုံးပြုသူ စီမံခန့်ခွဲမှု' },
-  'admin.systemKeys': { en: 'System Key Pool', my: 'System Key Pool' },
+  'admin.users': { en: 'Users', my: 'အသုံးပြုသူများ' },
+  'admin.systemKeys': { en: 'System Keys', my: 'System Keys' },
+  'admin.userGeminiKeys': { en: 'User Keys', my: 'အသုံးပြုသူ Keys' },
   'admin.settings': { en: 'Settings', my: 'ဆက်တင်များ' },
   'admin.addUser': { en: 'Add User', my: 'အသုံးပြုသူ ထည့်ရန်' },
   'admin.userLabel': { en: 'User Label', my: 'အသုံးပြုသူ အမည်' },
@@ -97,6 +98,9 @@ const translations: Translations = {
   'admin.proxyUrl': { en: 'Proxy Base URL', my: 'Proxy Base URL' },
   'admin.back': { en: 'Back to Login', my: 'Login သို့ ပြန်သွားရန်' },
   'admin.logout': { en: 'Logout', my: 'ထွက်ရန်' },
+  'admin.addToSystemKeys': { en: 'Add to System', my: 'System သို့ ထည့်ရန်' },
+  'admin.noUserKeys': { en: 'No user Gemini keys yet', my: 'အသုံးပြုသူ Gemini keys မရှိသေးပါ' },
+  'admin.lastUsed': { en: 'Last used', my: 'နောက်ဆုံး အသုံးပြု' },
   
   // Common
   'common.loading': { en: 'Loading...', my: 'ခဏစောင့်ပါ...' },

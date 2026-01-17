@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      gemini_sessions: {
+        Row: {
+          created_at: string | null
+          gemini_api_key: string
+          id: string
+          is_converted_to_system_key: boolean | null
+          label: string | null
+          last_used_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gemini_api_key: string
+          id?: string
+          is_converted_to_system_key?: boolean | null
+          label?: string | null
+          last_used_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gemini_api_key?: string
+          id?: string
+          is_converted_to_system_key?: boolean | null
+          label?: string | null
+          last_used_at?: string | null
+        }
+        Relationships: []
+      }
       generations: {
         Row: {
           additional_context: string | null

