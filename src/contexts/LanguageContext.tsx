@@ -101,6 +101,9 @@ const translations: Translations = {
   'admin.addToSystemKeys': { en: 'Add to System', my: 'System သို့ ထည့်ရန်' },
   'admin.noUserKeys': { en: 'No user Gemini keys yet', my: 'အသုံးပြုသူ Gemini keys မရှိသေးပါ' },
   'admin.lastUsed': { en: 'Last used', my: 'နောက်ဆုံး အသုံးပြု' },
+  'admin.dailyLimit': { en: 'Daily Generation Limit', my: 'နေ့စဉ် ဖန်တီးမှု ကန့်သတ်' },
+  'admin.dailyLimitDesc': { en: 'Max generations per user/key per day', my: 'တစ်နေ့လျှင် အများဆုံး ဖန်တီးမှု အရေအတွက်' },
+  'admin.rateLimited': { en: 'Daily limit reached', my: 'နေ့စဉ် ကန့်သတ်ချက် ပြည့်သွားပါပြီ' },
   
   // Common
   'common.loading': { en: 'Loading...', my: 'ခဏစောင့်ပါ...' },

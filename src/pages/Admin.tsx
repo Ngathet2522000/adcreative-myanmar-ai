@@ -59,6 +59,7 @@ export default function Admin() {
 
   const [newPassword, setNewPassword] = useState('');
   const [proxyUrl, setProxyUrl] = useState('');
+  const [dailyLimit, setDailyLimit] = useState('50');
   const [savingSettings, setSavingSettings] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -103,6 +104,8 @@ export default function Admin() {
       if (settingsRes.data) {
         const proxyUrlSetting = settingsRes.data.find(s => s.key === 'proxy_base_url');
         if (proxyUrlSetting) setProxyUrl(proxyUrlSetting.value);
+        const dailyLimitSetting = settingsRes.data.find(s => s.key === 'daily_generation_limit');
+        if (dailyLimitSetting) setDailyLimit(dailyLimitSetting.value);
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -252,6 +255,13 @@ export default function Admin() {
           .from('settings')
           .update({ value: proxyUrl.trim() })
           .eq('key', 'proxy_base_url')
+      );
+
+      updates.push(
+        supabase
+          .from('settings')
+          .update({ value: dailyLimit.trim() })
+          .eq('key', 'daily_generation_limit')
       );
 
       await Promise.all(updates);
@@ -573,6 +583,23 @@ export default function Admin() {
                   placeholder={t('admin.newPassword')}
                   className="mt-1 text-sm"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="dailyLimit" className="text-xs sm:text-sm">{t('admin.dailyLimit')}</Label>
+                <Input
+                  id="dailyLimit"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  value={dailyLimit}
+                  onChange={(e) => setDailyLimit(e.target.value)}
+                  placeholder="50"
+                  className="mt-1 text-sm"
+                />
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  {t('admin.dailyLimitDesc')}
+                </p>
               </div>
 
               <div>

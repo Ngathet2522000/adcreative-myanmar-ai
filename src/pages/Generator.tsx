@@ -86,10 +86,16 @@ export default function Generator() {
           imageBase64,
           useGemini: isGeminiMode,
           geminiApiKey: isGeminiMode ? geminiApiKey : user?.geminiApiKey,
+          userId: user?.id,
         },
       });
 
       if (error) throw error;
+
+      if (data?.rateLimited) {
+        toast.error(data.error || `Daily limit of ${data.limit} generations reached.`);
+        return;
+      }
 
       if (data?.content) {
         setGeneratedContent(data.content);

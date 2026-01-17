@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_usage: {
+        Row: {
+          api_key_hash: string | null
+          created_at: string | null
+          gemini_session_id: string | null
+          generation_count: number
+          id: string
+          updated_at: string | null
+          usage_date: string
+          user_id: string | null
+        }
+        Insert: {
+          api_key_hash?: string | null
+          created_at?: string | null
+          gemini_session_id?: string | null
+          generation_count?: number
+          id?: string
+          updated_at?: string | null
+          usage_date?: string
+          user_id?: string | null
+        }
+        Update: {
+          api_key_hash?: string | null
+          created_at?: string | null
+          gemini_session_id?: string | null
+          generation_count?: number
+          id?: string
+          updated_at?: string | null
+          usage_date?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_usage_gemini_session_id_fkey"
+            columns: ["gemini_session_id"]
+            isOneToOne: false
+            referencedRelation: "gemini_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gemini_sessions: {
         Row: {
           created_at: string | null
