@@ -68,6 +68,7 @@ export type Database = {
           gemini_api_key: string
           id: string
           is_converted_to_system_key: boolean | null
+          is_premium: boolean
           label: string | null
           last_used_at: string | null
           usage_count: number
@@ -77,6 +78,7 @@ export type Database = {
           gemini_api_key: string
           id?: string
           is_converted_to_system_key?: boolean | null
+          is_premium?: boolean
           label?: string | null
           last_used_at?: string | null
           usage_count?: number
@@ -86,6 +88,7 @@ export type Database = {
           gemini_api_key?: string
           id?: string
           is_converted_to_system_key?: boolean | null
+          is_premium?: boolean
           label?: string | null
           last_used_at?: string | null
           usage_count?: number
@@ -197,6 +200,7 @@ export type Database = {
           gemini_api_key: string | null
           id: string
           is_active: boolean
+          is_premium: boolean
           label: string
           updated_at: string
         }
@@ -206,6 +210,7 @@ export type Database = {
           gemini_api_key?: string | null
           id?: string
           is_active?: boolean
+          is_premium?: boolean
           label: string
           updated_at?: string
         }
@@ -215,6 +220,7 @@ export type Database = {
           gemini_api_key?: string | null
           id?: string
           is_active?: boolean
+          is_premium?: boolean
           label?: string
           updated_at?: string
         }

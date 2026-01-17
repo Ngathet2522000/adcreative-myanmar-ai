@@ -32,25 +32,51 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get daily limit from settings
-    const { data: limitSetting } = await supabase
+    // Get tier-specific limits from settings
+    const { data: freeLimitSetting } = await supabase
       .from('settings')
       .select('value')
-      .eq('key', 'daily_generation_limit')
+      .eq('key', 'free_daily_limit')
       .maybeSingle();
-    
-    const dailyLimit = parseInt(limitSetting?.value || '50', 10);
-    console.log('Daily generation limit:', dailyLimit);
+
+    const { data: premiumLimitSetting } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'premium_daily_limit')
+      .maybeSingle();
+
+    const freeLimit = parseInt(freeLimitSetting?.value || '5', 10);
+    const premiumLimit = parseInt(premiumLimitSetting?.value || '100', 10);
+    console.log('Tier limits - Free:', freeLimit, 'Premium:', premiumLimit);
 
     // Check rate limit
     const today = new Date().toISOString().split('T')[0];
     let rateLimitKey: { user_id?: string; api_key_hash?: string } = {};
+    let isPremium = false;
     
     if (userId) {
       rateLimitKey = { user_id: userId };
+      // Check if user is premium
+      const { data: userData } = await supabase
+        .from('users')
+        .select('is_premium')
+        .eq('id', userId)
+        .maybeSingle();
+      isPremium = userData?.is_premium || false;
     } else if (geminiApiKey) {
       rateLimitKey = { api_key_hash: hashApiKey(geminiApiKey) };
+      // Check if gemini session is premium
+      const { data: sessionData } = await supabase
+        .from('gemini_sessions')
+        .select('is_premium')
+        .eq('gemini_api_key', geminiApiKey)
+        .maybeSingle();
+      isPremium = sessionData?.is_premium || false;
     }
+
+    const dailyLimit = isPremium ? premiumLimit : freeLimit;
+    const tierName = isPremium ? 'Premium' : 'Free';
+    console.log('User tier:', tierName, 'Daily limit:', dailyLimit);
 
     if (Object.keys(rateLimitKey).length > 0) {
       // Check current usage
@@ -65,12 +91,14 @@ serve(async (req) => {
       console.log('Current daily usage:', currentCount, '/', dailyLimit);
 
       if (currentCount >= dailyLimit) {
-        console.log('Rate limit exceeded');
+        console.log('Rate limit exceeded for', tierName, 'user');
         return new Response(JSON.stringify({ 
-          error: `Daily limit of ${dailyLimit} generations reached. Please try again tomorrow.`,
+          error: `Daily limit of ${dailyLimit} generations reached for ${tierName} tier. Please try again tomorrow.`,
           rateLimited: true,
           currentUsage: currentCount,
-          limit: dailyLimit
+          limit: dailyLimit,
+          tier: tierName.toLowerCase(),
+          isPremium
         }), {
           status: 429, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

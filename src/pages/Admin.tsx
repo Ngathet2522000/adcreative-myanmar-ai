@@ -16,6 +16,7 @@ interface User {
   access_key: string;
   gemini_api_key: string | null;
   is_active: boolean;
+  is_premium: boolean;
   created_at: string;
 }
 
@@ -32,6 +33,7 @@ interface GeminiSession {
   gemini_api_key: string;
   label: string;
   is_converted_to_system_key: boolean;
+  is_premium: boolean;
   created_at: string;
   last_used_at: string;
   usage_count: number;
@@ -59,7 +61,8 @@ export default function Admin() {
 
   const [newPassword, setNewPassword] = useState('');
   const [proxyUrl, setProxyUrl] = useState('');
-  const [dailyLimit, setDailyLimit] = useState('50');
+  const [freeDailyLimit, setFreeDailyLimit] = useState('5');
+  const [premiumDailyLimit, setPremiumDailyLimit] = useState('100');
   const [savingSettings, setSavingSettings] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -104,8 +107,10 @@ export default function Admin() {
       if (settingsRes.data) {
         const proxyUrlSetting = settingsRes.data.find(s => s.key === 'proxy_base_url');
         if (proxyUrlSetting) setProxyUrl(proxyUrlSetting.value);
-        const dailyLimitSetting = settingsRes.data.find(s => s.key === 'daily_generation_limit');
-        if (dailyLimitSetting) setDailyLimit(dailyLimitSetting.value);
+        const freeLimitSetting = settingsRes.data.find(s => s.key === 'free_daily_limit');
+        if (freeLimitSetting) setFreeDailyLimit(freeLimitSetting.value);
+        const premiumLimitSetting = settingsRes.data.find(s => s.key === 'premium_daily_limit');
+        if (premiumLimitSetting) setPremiumDailyLimit(premiumLimitSetting.value);
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -260,8 +265,15 @@ export default function Admin() {
       updates.push(
         supabase
           .from('settings')
-          .update({ value: dailyLimit.trim() })
-          .eq('key', 'daily_generation_limit')
+          .update({ value: freeDailyLimit.trim() })
+          .eq('key', 'free_daily_limit')
+      );
+
+      updates.push(
+        supabase
+          .from('settings')
+          .update({ value: premiumDailyLimit.trim() })
+          .eq('key', 'premium_daily_limit')
       );
 
       await Promise.all(updates);
@@ -401,10 +413,27 @@ export default function Admin() {
                 <div key={user.id} className="glass-card rounded-xl p-3 sm:p-4">
                   <div className="flex items-start sm:items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-semibold text-sm sm:text-base truncate">{user.label}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-sm sm:text-base truncate">{user.label}</h4>
+                        <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded ${user.is_premium ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                          {user.is_premium ? t('admin.tierPremium') : t('admin.tierFree')}
+                        </span>
+                      </div>
                       <code className="text-[10px] sm:text-xs text-muted-foreground break-all">{user.access_key}</code>
                     </div>
                     <div className="flex gap-1 sm:gap-2 shrink-0">
+                      <Button
+                        variant={user.is_premium ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={async () => {
+                          await supabase.from('users').update({ is_premium: !user.is_premium }).eq('id', user.id);
+                          fetchData();
+                          toast.success(user.is_premium ? 'Set to Free tier' : 'Set to Premium tier');
+                        }}
+                        className="h-7 sm:h-8 px-2 text-xs"
+                      >
+                        {user.is_premium ? t('admin.setAsFree') : t('admin.setAsPremium')}
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -447,10 +476,13 @@ export default function Admin() {
                   <div key={session.id} className="glass-card rounded-xl p-3 sm:p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <code className="text-xs sm:text-sm text-foreground font-mono">
                             {session.gemini_api_key.slice(0, 10)}...{session.gemini_api_key.slice(-4)}
                           </code>
+                          <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded ${session.is_premium ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                            {session.is_premium ? t('admin.tierPremium') : t('admin.tierFree')}
+                          </span>
                           {session.is_converted_to_system_key && (
                             <span className="text-[10px] sm:text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
                               In System
@@ -467,6 +499,18 @@ export default function Admin() {
                         </div>
                       </div>
                       <div className="flex gap-1 sm:gap-2 shrink-0">
+                        <Button
+                          variant={session.is_premium ? "secondary" : "outline"}
+                          size="sm"
+                          onClick={async () => {
+                            await supabase.from('gemini_sessions').update({ is_premium: !session.is_premium }).eq('id', session.id);
+                            fetchData();
+                            toast.success(session.is_premium ? 'Set to Free tier' : 'Set to Premium tier');
+                          }}
+                          className="h-7 sm:h-8 px-2 text-xs"
+                        >
+                          {session.is_premium ? t('admin.setAsFree') : t('admin.setAsPremium')}
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -585,21 +629,39 @@ export default function Admin() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="dailyLimit" className="text-xs sm:text-sm">{t('admin.dailyLimit')}</Label>
-                <Input
-                  id="dailyLimit"
-                  type="number"
-                  min="1"
-                  max="1000"
-                  value={dailyLimit}
-                  onChange={(e) => setDailyLimit(e.target.value)}
-                  placeholder="50"
-                  className="mt-1 text-sm"
-                />
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                  {t('admin.dailyLimitDesc')}
-                </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="freeDailyLimit" className="text-xs sm:text-sm">{t('admin.freeDailyLimit')}</Label>
+                  <Input
+                    id="freeDailyLimit"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={freeDailyLimit}
+                    onChange={(e) => setFreeDailyLimit(e.target.value)}
+                    placeholder="5"
+                    className="mt-1 text-sm"
+                  />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                    {t('admin.freeDailyLimitDesc')}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="premiumDailyLimit" className="text-xs sm:text-sm">{t('admin.premiumDailyLimit')}</Label>
+                  <Input
+                    id="premiumDailyLimit"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={premiumDailyLimit}
+                    onChange={(e) => setPremiumDailyLimit(e.target.value)}
+                    placeholder="100"
+                    className="mt-1 text-sm"
+                  />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                    {t('admin.premiumDailyLimitDesc')}
+                  </p>
+                </div>
               </div>
 
               <div>
