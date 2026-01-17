@@ -10,6 +10,7 @@ import { ToneCard } from '@/components/ToneCard';
 import { ContentLengthToggle } from '@/components/ContentLengthToggle';
 import { ImageUpload } from '@/components/ImageUpload';
 import { GeneratedContent } from '@/components/GeneratedContent';
+import { QuotaDisplay } from '@/components/QuotaDisplay';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +38,7 @@ export default function Generator() {
   const [image, setImage] = useState<File | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!user && !isGeminiMode) {
@@ -99,6 +101,8 @@ export default function Generator() {
 
       if (data?.content) {
         setGeneratedContent(data.content);
+        // Refresh quota display after successful generation
+        setQuotaRefreshKey(prev => prev + 1);
       } else if (data?.error) {
         throw new Error(data.error);
       }
@@ -127,6 +131,15 @@ export default function Generator() {
               Using your Gemini API Key
             </p>
           )}
+        </div>
+
+        {/* Quota Display */}
+        <div className="mb-6">
+          <QuotaDisplay 
+            userId={user?.id || null} 
+            geminiApiKey={isGeminiMode ? geminiApiKey : null}
+            refreshKey={quotaRefreshKey}
+          />
         </div>
 
         <form onSubmit={handleGenerate} className="space-y-4 sm:space-y-6">
