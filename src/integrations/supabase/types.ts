@@ -22,6 +22,7 @@ export type Database = {
           is_converted_to_system_key: boolean | null
           label: string | null
           last_used_at: string | null
+          usage_count: number
         }
         Insert: {
           created_at?: string | null
@@ -30,6 +31,7 @@ export type Database = {
           is_converted_to_system_key?: boolean | null
           label?: string | null
           last_used_at?: string | null
+          usage_count?: number
         }
         Update: {
           created_at?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           is_converted_to_system_key?: boolean | null
           label?: string | null
           last_used_at?: string | null
+          usage_count?: number
         }
         Relationships: []
       }

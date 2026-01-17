@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,14 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, keywords, additionalContext, contentLength, tone, imageBase64, useGemini, geminiApiKey } = await req.json();
+    const { topic, keywords, additionalContext, contentLength, tone, imageBase64, useGemini, geminiApiKey, userId } = await req.json();
+
+    console.log('Generate content request:', { topic, tone, contentLength, useGemini, hasApiKey: !!geminiApiKey, userId });
+
+    // Initialize Supabase client for usage tracking
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const lengthGuide = {
       short: '50-100 words',
@@ -61,9 +69,52 @@ ${imageBase64 ? 'Note: Visual reference image was provided. Consider visual elem
 Please provide the ad content now:`;
 
     let response;
+    let usageTrackingPromise: Promise<void> | null = null;
     
-    // Use Lovable AI by default, Gemini API if provided
+    // Use Gemini API if provided (user's own key or assigned key)
     if (useGemini && geminiApiKey) {
+      console.log('Using Gemini API with provided key');
+      
+      // Track usage for gemini_sessions (user-provided keys)
+      usageTrackingPromise = (async () => {
+        try {
+          // First try to update gemini_sessions
+          const { data: sessionData, error: sessionError } = await supabase
+            .from('gemini_sessions')
+            .select('id, usage_count')
+            .eq('gemini_api_key', geminiApiKey)
+            .maybeSingle();
+
+          if (sessionData) {
+            await supabase
+              .from('gemini_sessions')
+              .update({ 
+                usage_count: (sessionData.usage_count || 0) + 1,
+                last_used_at: new Date().toISOString()
+              })
+              .eq('id', sessionData.id);
+            console.log('Updated gemini_sessions usage count');
+          }
+
+          // Also check system_keys if this key is there
+          const { data: systemKeyData } = await supabase
+            .from('system_keys')
+            .select('id, usage_count')
+            .eq('api_key', geminiApiKey)
+            .maybeSingle();
+
+          if (systemKeyData) {
+            await supabase
+              .from('system_keys')
+              .update({ usage_count: (systemKeyData.usage_count || 0) + 1 })
+              .eq('id', systemKeyData.id);
+            console.log('Updated system_keys usage count');
+          }
+        } catch (err) {
+          console.error('Usage tracking error:', err);
+        }
+      })();
+
       // Use Google Gemini directly
       response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiApiKey, {
         method: 'POST',
@@ -83,11 +134,16 @@ Please provide the ad content now:`;
       const data = await response.json();
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
+      // Wait for usage tracking to complete
+      if (usageTrackingPromise) await usageTrackingPromise;
+
+      console.log('Content generated successfully with Gemini API');
       return new Response(JSON.stringify({ content }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {
-      // Use Lovable AI Gateway
+      // Use Lovable AI Gateway (no tracking needed as it's a system resource)
+      console.log('Using Lovable AI Gateway');
       const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
       if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
@@ -123,6 +179,7 @@ Please provide the ad content now:`;
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content;
 
+      console.log('Content generated successfully with Lovable AI');
       return new Response(JSON.stringify({ content }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
